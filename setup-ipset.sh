@@ -1,7 +1,15 @@
-# run as root
+#
+# 该脚本用于禁止 jsporxy 用户访问内网，防止 SSRF 攻击
+# 需要 root 权限运行，依赖 ipset 命令
+#
+if [[ $(iptables -L | grep "anti ssrf") ]]; then
+  exit
+fi
+
 ipset create ngx-ban-dstip hash:net
 
 iptables \
+  -m comment --comment "anti ssrf" \
   -A OUTPUT \
   -p tcp --syn \
   -m owner --uid-owner jsproxy \
@@ -31,3 +39,6 @@ REV_NET=(
 for v in ${REV_NET[@]}; do
   ipset add ngx-ban-dstip $v
 done
+
+# 可屏蔽更多的网段：
+# ipset add ngx-ban-dstip xxx
